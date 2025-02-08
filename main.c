@@ -55,6 +55,22 @@ void cadastrarPedido() {
     
 }
 
+void visualizarCadastrados() { 
+    if (inicioFila == NULL) {
+        printf("\nNenhum pedido cadastrado.\n");
+        return;
+    }
+
+    Pedido* atual = inicioFila; // Começa pelo início da fila
+    printf("Pedidos na fila:\n");
+    while (atual != NULL) {
+        printf("ID: %d\n", atual->id);
+        printf("Valor Total: R$%.2f\n", atual->valorTotal);
+        printf("Tipo de Entrega ('L' para Local/'D' para Delivery): %c\n", atual->tipoEntrega);
+        atual = atual->proximo; // Move para a próxima pessoa
+    }
+}
+
 void alterarPedido() {
     if(inicioFila == NULL) {
         printf("Nenhum pedido foi registrado ainda.\n");
@@ -112,11 +128,15 @@ void cancelarPedido() { // falta verificar se o pedido ja foi preparado ou nao
 }
 
 
-prepararPedido() {
+void prepararPedido() {
     
 }
 
-entregarPedido() {
+void visualizarProntos() {
+    
+}
+
+void entregarPedido() {
     
 }
 
@@ -126,10 +146,12 @@ int main () {
     do {
         printf("Escolha uma opcao:\n");
         printf("1 - Cadastrar pedido\n");
-        printf("2 - Alterar pedido\n");
-        printf("3 - Cancelar pedido\n");
-        printf("4 - Preparar pedido\n");
-        printf("5 - Entregar pedido\n");
+        printf("2 - Visualizar pedidos cadastrados\n");
+        printf("3 - Alterar pedido\n");
+        printf("4 - Cancelar pedido\n");
+        printf("5 - Preparar pedido\n");
+        printf("6 - Visualizar pedidos prontos\n");
+        printf("7 - Entregar pedido\n");
         printf("0 - Sair\n");
         printf("Opcao: ");
         scanf("%d", &opcao);
@@ -140,15 +162,21 @@ int main () {
                 cadastrarPedido();
                 break;
             case 2:
+                visualizarCadastrados();
+            break;
+            case 3:
                 alterarPedido();
                 break;
-            case 3:
+            case 4:
                 cancelarPedido();
                 break;
-            case 4:
+            case 5:
                 prepararPedido();
                 break;
-            case 5:
+            case 6:
+                visualizarProntos();
+            break;
+            case 7:
                 entregarPedido();
                 break;
             case 0:
