@@ -245,6 +245,7 @@ void liberarMemoriaListaLigada (pedido *listaLigada) {
 }
 
 int main () {
+	// inicializando as estruturas
 	cozinha = malloc (sizeof (pedido));
 	cozinha->prox = cozinha;
 	local = malloc (sizeof (pedido));
