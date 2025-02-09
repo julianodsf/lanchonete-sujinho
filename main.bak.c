@@ -63,7 +63,7 @@ void alterarPedidoCozinha () {
 				scanf ("%d", &numTipo);
 			} while (numTipo < 0 || numTipo > 2);
 			p->tipo = numTipo;
-			printf ("Pedio alterado com sucesso.\n");
+			printf ("Pedido alterado com sucesso.\n");
 			return;
 		}
 		p = p->prox;
