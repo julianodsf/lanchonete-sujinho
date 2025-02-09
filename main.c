@@ -1,3 +1,5 @@
+// Problema 1: Lanchonete Sujinho - Dupla: Juliano Farias e Maria Fernanda 
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -10,10 +12,12 @@ struct node {
 
 typedef struct node pedido;
 
+// cozinha, local e deliveryNormal são filas que usando listas encadeadas circulares
 pedido *cozinha, *local, *deliveryNormal, *deliveryEconomico, *registroSaida;
 int proxId = 0, tamPilhaDeliveryEconomico = 0;
 char *tipos[] = {"local", "delivery normal", "delivery economico", "cancelado"};
 
+// manda um pedido para fila cozinha
 void cadastrarPedido () {
 	int numTipo;
 	pedido *p;
@@ -31,6 +35,7 @@ void cadastrarPedido () {
 	cozinha->id = proxId++;
 	cozinha->tipo = numTipo;
 	cozinha = p;
+	printf("Pedido cadastrado com sucesso.\n");
 }
 
 void exibirPedidosCozinha () {
@@ -43,7 +48,7 @@ void exibirPedidosCozinha () {
 		p = p->prox;
 	}
 }
-
+// modifica os valores de um pedido que ainda está na cozinha (que não está pronto)
 void alterarPedidoCozinha () {
 	int id;
 	printf ("Digite o id do pedido que deseja alterar: ");
@@ -62,7 +67,7 @@ void alterarPedidoCozinha () {
 				scanf ("%d", &numTipo);
 			} while (numTipo < 0 || numTipo > 2);
 			p->tipo = numTipo;
-			printf ("Pedio alterado com sucesso.\n");
+			printf ("Pedido alterado com sucesso.\n");
 			return;
 		}
 		p = p->prox;
@@ -70,6 +75,7 @@ void alterarPedidoCozinha () {
 	printf ("Pedido nao encontrado.\n");
 }
 
+// manda o pedido cancelado pro registro de saída
 void cancelarPedido () {
 	int id;
 	printf ("Digite o id do pedido que deseja cancelar: ");
@@ -95,14 +101,15 @@ void cancelarPedido () {
 void exibirRegistroSaida () {
 	pedido *p;
 	p = registroSaida->prox;
-	printf ("== LISTA D REGISTRO DE SAIDA ==\n");
+	printf ("== LISTA DO REGISTRO DE SAIDA ==\n");
 	printf ("ID\tVALOR TOTAL\tTIPO DO PEDIDO\n");
 	while (p != NULL) {
 		printf ("%d\tR$ %.2f\t%s\n", p->id, p->valorTotal, tipos[p->tipo]);
 		p = p->prox;
 	}
 }
-
+// prepara o próximo pedido na fila da cozinha e encaminha 
+// pra estrutura de saída correspondente ao tipo do pedido
 void prepararPedidoCozinha () {
 	pedido *p;
 	p = cozinha->prox; // primeiro pedido da fila
@@ -136,6 +143,7 @@ void prepararPedidoCozinha () {
 			deliveryEconomico->prox = p;
 			tamPilhaDeliveryEconomico++;
 	}
+	printf("Pedido %d pronto.\n", p->id);
 }
 
 void entregarPedidoLocal () {
@@ -148,6 +156,7 @@ void entregarPedidoLocal () {
 	local->prox = p->prox;
 	p->prox = registroSaida->prox;
 	registroSaida->prox = p;
+	printf("Entrega do pedido %d realizado.\n", p->id);
 }
 
 void entregarPedidoDeliveryNormal () {
@@ -160,6 +169,7 @@ void entregarPedidoDeliveryNormal () {
 	deliveryNormal->prox = p->prox;
 	p->prox = registroSaida->prox;
 	registroSaida->prox = p;
+	printf("Delivery do pedido %d realizado.\n", p->id);
 }
 
 void entregarPedidoDeliveryEconomico () {
@@ -175,6 +185,7 @@ void entregarPedidoDeliveryEconomico () {
 		registroSaida->prox = p;
 		p = deliveryEconomico->prox;
 	}
+	printf("Delivery Economico de %d pedidos realizado.\n", tamPilhaDeliveryEconomico);
 	tamPilhaDeliveryEconomico = 0;
 }
 
@@ -315,6 +326,7 @@ int main () {
 				exibirRegistroSaida ();
 				break;
             case 0:
+                printf("Saindo do sistema...");
                 // Sai do programa liberando a memória
                 liberarMemoriaFila (cozinha);
                 liberarMemoriaFila (local);
