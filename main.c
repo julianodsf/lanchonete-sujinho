@@ -1,255 +1,330 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
 
-typedef struct Pedido {
-    int id;
-    float valorTotal;
-    char tipoEntrega; // 'L' para Local e 'D' para Delivery
-    struct Pedido* proximo; // 
-} Pedido;
+struct node {
+	int id;
+	float valorTotal;
+	int tipo;
+	struct node *prox;
+};
 
-typedef struct Fila {
-    Pedido* frente; // Para a ordem de encaminhamento p cozinha
-    Pedido* tras; // Para remover os ultimos pedidos
-    int tamanho; // para contar o numero de pedidos na fila
-} Fila;
+typedef struct node pedido;
 
+pedido *cozinha, *local, *deliveryNormal, *deliveryEconomico, *registroSaida;
+int proxId = 0, tamPilhaDeliveryEconomico = 0;
+char *tipos[] = {"local", "delivery normal", "delivery economico", "cancelado"};
 
-Pedido* inicioFila = NULL;
-int nPedidos = 0;
-
-Fila filaLocal = { .frente = NULL, .tras = NULL, .tamanho = 0 }; // fiquei em duvida nao sei se eh a melhor maneira 
-// iniciar a fila, pode mudar se preferir
-Fila filaDelivery = { .frente = NULL, .tras = NULL, .tamanho = 0 };
-
-
-
-
-void cadastrarPedido() {
-    Pedido* novoPedido = (Pedido*)calloc(1, sizeof(Pedido));
-    if (novoPedido == NULL) {
-        printf("Erro ao alocar memória para o novo pedido.\n");
-        return;
-    }
-    
-    printf("Digite o ID do pedido: ");
-    scanf("%d", &novoPedido->id);
-    getchar();
-    
-    printf("Digite o valor total do pedido: R$");
-    scanf("%f", &novoPedido->valorTotal);
-    getchar();
-    
-    printf("Digite o tipo de entrega do pedido ('L' para Local/'D' para Delivery): ");
-    scanf("%c", &novoPedido->tipoEntrega);
-    
-    novoPedido->proximo = NULL;
-    
-    if (inicioFila == NULL) {
-        inicioFila = novoPedido;
-    } else {
-        Pedido* atual = inicioFila;
-        while (atual->proximo != NULL) {
-            atual = atual->proximo;
-        }
-        atual->proximo = novoPedido;
-    }
-    
-    nPedidos++;
-    printf("Pedido cadastrado com sucesso.\n");
-    
+void cadastrarPedido () {
+	int numTipo;
+	pedido *p;
+	p = malloc (sizeof (pedido));
+	p->prox = cozinha->prox;
+	cozinha->prox = p;
+	do {
+		printf ("Digite o valor total do pedido: R$ ");
+		scanf ("%f", &cozinha->valorTotal);
+	} while (cozinha->valorTotal <= 0);
+	do {
+		printf ("Digite o tipo do pedido (0 = local, 1 = delivery normal, 2 = delivery economico): ");
+		scanf ("%d", &numTipo);
+	} while (numTipo < 0 || numTipo > 2);
+	cozinha->id = proxId++;
+	cozinha->tipo = numTipo;
+	cozinha = p;
 }
 
-void visualizarCadastrados() { 
-    if (inicioFila == NULL) {
-        printf("\nNenhum pedido cadastrado.\n");
-        return;
-    }
-
-    Pedido* atual = inicioFila;
-    printf("Pedidos na fila:\n");
-    while (atual != NULL) {
-        printf("ID: %d\n", atual->id);
-        printf("Valor Total: R$%.2f\n", atual->valorTotal);
-        printf("Tipo de Entrega ('L' para Local/'D' para Delivery): %c\n", atual->tipoEntrega);
-        atual = atual->proximo;
-    }
+void exibirPedidosCozinha () {
+	pedido *p;
+	p = cozinha->prox;
+	printf ("== LISTA DE PEDIDOS NA COZINHA (AGUARDANDO) ==\n");
+	printf ("ID\tVALOR TOTAL\tTIPO DO PEDIDO\n");
+	while (p != cozinha) {
+		printf ("%d\tR$ %.2f\t%s\n", p->id, p->valorTotal, tipos[p->tipo]);
+		p = p->prox;
+	}
 }
 
-void alterarPedido() {
-    if(inicioFila == NULL) {
-        printf("Nenhum pedido foi registrado ainda.\n");
-        return;
-    }
-    
-    int idPedido;
-    printf("Digite o ID do pedido que quer alterar: ");
-    scanf("%d", &idPedido);
-    getchar();
-    
-    Pedido* atual = inicioFila;
-    while (atual != NULL) {
-        if (atual->id == idPedido) {
-            printf("ID do Pedido selecionado: %d\n", atual->id);
-            
-            printf("Digite o novo valor total do pedido: R$");
-            scanf("%f", &atual->valorTotal);
-            
-            // a mudanca no tipo de entrega nao esta funcionando
-            printf("Digite o novo tipo de entrega do pedido('L' para Local/'D' para Delivery): ");
-            scanf("%c", &atual->tipoEntrega);
-            
-            printf("Pedido alterado com sucesso.\n");
-            return;
-        }
-        atual = atual->proximo;
-    }
-    
-    printf("Pedido com ID %d não encontrado.\n", idPedido);
+void alterarPedidoCozinha () {
+	int id;
+	printf ("Digite o id do pedido que deseja alterar: ");
+	scanf ("%d", &id);
+	pedido *p;
+	p = cozinha->prox;
+	while (p != cozinha) {
+		if (p->id == id) {
+			int numTipo;
+			do {
+				printf ("Digite o novo valor total: R$ ");
+				scanf ("%f", &p->valorTotal);
+			} while (p->valorTotal <= 0);
+			do {
+				printf ("Digite o novo tipo do pedido (0 = local, 1 = delivery normal, 2 = delivery economico): ");
+				scanf ("%d", &numTipo);
+			} while (numTipo < 0 || numTipo > 2);
+			p->tipo = numTipo;
+			printf ("Pedio alterado com sucesso.\n");
+			return;
+		}
+		p = p->prox;
+	}
+	printf ("Pedido nao encontrado.\n");
 }
 
-void cancelarPedido() { // falta verificar se o pedido ja foi preparado ou nao
-    if(inicioFila == NULL) {
-        printf("Nenhum pedido foi registrado ainda.\n");
-        return;
-    }
-    
-    int idPedido;
-    printf("Digite o ID do pedido que quer alterar: ");
-    scanf("%d", &idPedido);
-    getchar();
-    
-    Pedido* cancelado = inicioFila;
-    while (cancelado != NULL) {
-        if (cancelado->id == idPedido) {
-            printf("ID do Pedido selecionado: %d\n", cancelado->id);
-            inicioFila = inicioFila->proximo;
-            free(cancelado);
-            nPedidos--;
-            printf("Pedido cancelado com sucesso.\n");
-        }
-        cancelado = cancelado->proximo;
-    }
+void cancelarPedido () {
+	int id;
+	printf ("Digite o id do pedido que deseja cancelar: ");
+	scanf ("%d", &id);
+	pedido *p, *tmp;
+	p = cozinha->prox;
+	tmp = cozinha;
+	while (p != cozinha) {
+		if (p->id == id) {
+			tmp->prox = p->prox;
+			p->tipo = 3;
+			p->prox = registroSaida->prox;
+			registroSaida->prox = p;
+			printf ("Pedido cancelado com sucesso.\n");
+			return;
+		}
+		tmp = p;
+		p = p->prox;
+	}
+	printf ("Pedido nao encontrado.\n");
 }
 
-
-void prepararPedido() {
-    if(inicioFila == NULL) {
-        printf("Nenhum pedido foi registrado ainda.\n");
-        return;
-    }
-    
-    
-    Pedido* preparado = inicioFila;
-    printf("ID do Pedido selecionado: %d\n", preparado->id);
-    
-    if (toupper(preparado->tipoEntrega) == 'L') {
-        if (filaLocal.frente == NULL) {
-            filaLocal.frente = preparado;
-        } else {
-            filaLocal.tras->proximo = preparado;
-        }
-        filaLocal.tras = preparado;
-        filaLocal.tamanho++;
-    } 
-    else if (toupper(preparado->tipoEntrega) == 'D') {
-        if (filaDelivery.frente == NULL) {
-            filaDelivery.frente = preparado;
-        } else {
-            filaDelivery.tras->proximo = preparado;
-        }
-        filaDelivery.tras = preparado;
-        filaDelivery.tamanho++;
-    }
-    
-    inicioFila = inicioFila->proximo;
-    preparado->proximo = NULL;
-    
-    free(preparado); // Libera a memória do pedido preparado
-    nPedidos--;    // Decrementa o contador de pedido
-    printf("O Pedido esta pronto.\n");
+void exibirRegistroSaida () {
+	pedido *p;
+	p = registroSaida->prox;
+	printf ("== LISTA D REGISTRO DE SAIDA ==\n");
+	printf ("ID\tVALOR TOTAL\tTIPO DO PEDIDO\n");
+	while (p != NULL) {
+		printf ("%d\tR$ %.2f\t%s\n", p->id, p->valorTotal, tipos[p->tipo]);
+		p = p->prox;
+	}
 }
 
-void visualizarProntos() { // tentei reaproveitar o codigo de visualizar cadastrados mas deu erro
-    if(filaLocal.frente == NULL || filaDelivery.frente == NULL) {
-        printf("Nenhum pedido foi preparado.\n");
-        return;
-    }
-    
-    Pedido* preparado = filaLocal.frente;
-    printf("Pedidos na fila:\n");
-    while (preparado != NULL) {
-        printf("ID: %d\n", preparado->id);
-        printf("Valor Total: R$%.2f\n", preparado->valorTotal);
-        printf("Tipo de Entrega ('L' para Local/'D' para Delivery): %c\n", preparado->tipoEntrega);
-        preparado = preparado->proximo;
-    }
-    
-    Pedido* preparado = filaDelivery.frente;
-    printf("Pedidos na fila:\n");
-    while (preparado != NULL) {
-        printf("ID: %d\n", preparado->id);
-        printf("Valor Total: R$%.2f\n", preparado->valorTotal);
-        printf("Tipo de Entrega ('L' para Local/'D' para Delivery): %c\n", preparado->tipoEntrega);
-        preparado = preparado->proximo;
-    }
+void prepararPedidoCozinha () {
+	pedido *p;
+	p = cozinha->prox; // primeiro pedido da fila
+	if (p == cozinha) {
+		// fila vazia
+		printf ("Nao ha pedidos na cozinha.\n");
+		return;
+	}
+	// desagregar o pedido da cozinha (desenfileirar)
+	cozinha->prox = p->prox;
+	// agregar o pedido na estrutura correspondente ao tipo do pedido
+	switch (p->tipo) {
+		case 0:
+			p->prox = local->prox;
+			local->prox = p;
+			local->id = p->id;
+			local->valorTotal = p->valorTotal;
+			local->tipo = p->tipo;
+			local = p;
+			break;
+		case 1:
+			p->prox = deliveryNormal->prox;
+			deliveryNormal->prox = p;
+			deliveryNormal->id = p->id;
+			deliveryNormal->valorTotal = p->valorTotal;
+			deliveryNormal->tipo = p->tipo;
+			deliveryNormal = p;
+			break;
+		default:
+			p->prox = deliveryEconomico->prox;
+			deliveryEconomico->prox = p;
+			tamPilhaDeliveryEconomico++;
+	}
 }
 
-void entregarPedido() {
-    if(inicioFila == NULL) {
-        printf("Nenhum pedido foi registrado ainda.\n");
-        return;
-    }
+void entregarPedidoLocal () {
+	pedido *p;
+	p = local->prox;
+	if (p == local) {
+		printf ("Nao ha pedidos na fila de pedidos prontos locais.\n");
+		return;
+	}
+	local->prox = p->prox;
+	p->prox = registroSaida->prox;
+	registroSaida->prox = p;
+}
+
+void entregarPedidoDeliveryNormal () {
+	pedido *p;
+	p = deliveryNormal->prox;
+	if (p == deliveryNormal) {
+		printf ("Nao ha pedidos na fila de pedidos prontos para delivery normal.\n");
+		return;
+	}
+	deliveryNormal->prox = p->prox;
+	p->prox = registroSaida->prox;
+	registroSaida->prox = p;
+}
+
+void entregarPedidoDeliveryEconomico () {
+	if (tamPilhaDeliveryEconomico < 3) {
+		printf ("A pilha de pedidos prontos para delivery economico tem menos de 3 pedidos.\n");
+		return;
+	}
+	pedido *p;
+	p = deliveryEconomico->prox;
+	while (p != NULL) {
+		deliveryEconomico->prox = p->prox;
+		p->prox = registroSaida->prox;
+		registroSaida->prox = p;
+		p = deliveryEconomico->prox;
+	}
+	tamPilhaDeliveryEconomico = 0;
+}
+
+void exibirPedidosLocal () {
+	pedido *p;
+	p = local->prox;
+	printf ("== LISTA DE PEDIDOS PRONTOS LOCAIS ==\n");
+	printf ("ID\tVALOR TOTAL\tTIPO DO PEDIDO\n");
+	while (p != local) {
+		printf ("%d\tR$ %.2f\t%s\n", p->id, p->valorTotal, tipos[p->tipo]);
+		p = p->prox;
+	}
+}
+
+void exibirPedidosDeliveryNormal () {
+	pedido *p;
+	p = deliveryNormal->prox;
+	printf ("== LISTA DE PEDIDOS PRONTOS PARA DELIVERY NORMAL ==\n");
+	printf ("ID\tVALOR TOTAL\tTIPO DO PEDIDO\n");
+	while (p != deliveryNormal) {
+		printf ("%d\tR$ %.2f\t%s\n", p->id, p->valorTotal, tipos[p->tipo]);
+		p = p->prox;
+	}
+}
+
+void exibirPedidosDeliveryEconomico () {
+	pedido *p;
+	p = deliveryEconomico->prox;
+	printf ("== LISTA DE PEDIDOS PRONTOS PARA DELIVERY ECONOMICO ==\n");
+	printf ("ID\tVALOR TOTAL\tTIPO DO PEDIDO\n");
+	while (p != NULL) {
+		printf ("%d\tR$ %.2f\t%s\n", p->id, p->valorTotal, tipos[p->tipo]);
+		p = p->prox;
+	}
+}
+
+void liberarMemoriaFila (pedido *fila) {
+	pedido *p;
+	p = fila->prox;
+	while (p != fila) {
+		pedido *aux = p->prox;
+		free (p);
+		p = aux;
+	}
+	free (fila);
+}
+
+void liberarMemoriaPilha (pedido *pilha) {
+	pedido *p;
+	p = pilha->prox;
+	while (p != NULL) {
+		pedido *aux = p->prox;
+		free (p);
+		p = aux;
+	}
+	free (pilha);
+}
+
+void liberarMemoriaListaLigada (pedido *listaLigada) {
+	pedido *p;
+	p = listaLigada->prox;
+	while (p != NULL) {
+		pedido *aux = p->prox;
+		free (p);
+		p = aux;
+	}
+	free (listaLigada);
 }
 
 int main () {
-    int opcao;
-
-    do {
+	cozinha = malloc (sizeof (pedido));
+	cozinha->prox = cozinha;
+	local = malloc (sizeof (pedido));
+	local->prox = local;
+	deliveryNormal = malloc (sizeof (pedido));
+	deliveryNormal->prox = deliveryNormal;
+	deliveryEconomico = malloc (sizeof (pedido));
+	deliveryEconomico->prox = NULL;
+	registroSaida = malloc (sizeof (pedido));
+	registroSaida->prox = NULL;
+	while (1) {
+        int opcao;
         printf("Escolha uma opcao:\n");
-        printf("1 - Cadastrar pedido\n");
-        printf("2 - Visualizar pedidos cadastrados\n");
-        printf("3 - Alterar pedido\n");
-        printf("4 - Cancelar pedido\n");
-        printf("5 - Preparar pedido\n");
-        printf("6 - Visualizar pedidos prontos\n");
-        printf("7 - Entregar pedido\n");
-        printf("0 - Sair\n");
+        printf("1  - Cadastrar Pedido\n");
+        printf("2  - Exibir Pedidos na Cozinha\n");
+        printf("3  - Alterar Pedido na Cozinha\n");
+        printf("4  - Cancelar Pedido na Cozinha\n");
+        printf("5  - Preparar Pedido na Cozinha\n");
+        printf("6  - Exibir Pedidos Prontos Locais\n");
+        printf("7  - Exibir Pedidos Prontos Para Delivery Normal\n");
+        printf("8  - Exibir Pedidos Prontos Para Delivery Economico\n");
+        printf("9  - Entregar Pedido Pronto Local\n");
+        printf("10 - Entregar Pedido Pronto Para Delivery Normal\n");
+        printf("11 - Entregar Pedido Pronto Para Delivery Economico\n");
+        printf("12 - Exibir Pedidos no Registro de Saida\n");
+        printf("0  - Sair\n");
         printf("Opcao: ");
         scanf("%d", &opcao);
-        getchar();
+        // getchar();
 
+        // Processa a escolha do usuário
         switch (opcao) {
             case 1:
-                cadastrarPedido();
+				cadastrarPedido ();
                 break;
             case 2:
-                visualizarCadastrados();
-            break;
+				exibirPedidosCozinha ();
+                break;
             case 3:
-                alterarPedido();
-                break;
-            case 4:
-                cancelarPedido();
-                break;
-            case 5:
-                prepararPedido();
-                break;
-            case 6:
-                visualizarProntos();
-            break;
-            case 7:
-                entregarPedido();
-                break;
+				alterarPedidoCozinha ();
+				break;
+			case 4:
+				cancelarPedido ();
+				break;
+			case 5:
+				prepararPedidoCozinha ();
+				break;
+			case 6:
+				exibirPedidosLocal ();
+				break;
+			case 7:
+				exibirPedidosDeliveryNormal ();
+				break;
+			case 8:
+				exibirPedidosDeliveryEconomico ();
+				break;
+			case 9:
+				entregarPedidoLocal ();
+				break;
+			case 10:
+				entregarPedidoDeliveryNormal ();
+				break;
+			case 11:
+				entregarPedidoDeliveryEconomico ();
+				break;
+			case 12:
+				exibirRegistroSaida ();
+				break;
             case 0:
-                printf("Desligando o sistema...\n");
-                break;
+                // Sai do programa liberando a memória
+                liberarMemoriaFila (cozinha);
+                liberarMemoriaFila (local);
+                liberarMemoriaFila (deliveryNormal);
+                liberarMemoriaPilha (deliveryEconomico);
+                liberarMemoriaListaLigada (registroSaida);
+                return 0;
             default:
-                printf("Opção inválida!\n");
+                // Opção inválida
+                printf("Opcao invalida\n");
         }
-    } while (opcao != 0);
-
-    return 0;
+    }
+	return 0;
 }
