@@ -167,8 +167,8 @@ void prepararPedido() {
     inicioFila = inicioFila->proximo;
     preparado->proximo = NULL;
     
-    free(preparado); // Libera a memória da pessoa chamada
-    nPedidos--;    // Decrementa o contador de pessoas
+    free(preparado); // Libera a memória do pedido preparado
+    nPedidos--;    // Decrementa o contador de pedido
     printf("O Pedido esta pronto.\n");
 }
 
