@@ -1,3 +1,5 @@
+// Problema 1: Lanchonete Sujinho - Dupla: Juliano Farias e Maria Fernanda 
+
 #include <stdio.h>
 #include <stdlib.h>
 
