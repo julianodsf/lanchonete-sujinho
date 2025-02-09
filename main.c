@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 typedef struct Pedido {
     int id;
@@ -18,6 +19,12 @@ typedef struct Fila {
 
 Pedido* inicioFila = NULL;
 int nPedidos = 0;
+
+Fila filaLocal = { .frente = NULL, .tras = NULL, .tamanho = 0 }; // fiquei em duvida nao sei se eh a melhor maneira 
+// iniciar a fila, pode mudar se preferir
+Fila filaDelivery = { .frente = NULL, .tras = NULL, .tamanho = 0 };
+
+
 
 
 void cadastrarPedido() {
@@ -61,13 +68,13 @@ void visualizarCadastrados() {
         return;
     }
 
-    Pedido* atual = inicioFila; // Começa pelo início da fila
+    Pedido* atual = inicioFila;
     printf("Pedidos na fila:\n");
     while (atual != NULL) {
         printf("ID: %d\n", atual->id);
         printf("Valor Total: R$%.2f\n", atual->valorTotal);
         printf("Tipo de Entrega ('L' para Local/'D' para Delivery): %c\n", atual->tipoEntrega);
-        atual = atual->proximo; // Move para a próxima pessoa
+        atual = atual->proximo;
     }
 }
 
@@ -85,7 +92,7 @@ void alterarPedido() {
     Pedido* atual = inicioFila;
     while (atual != NULL) {
         if (atual->id == idPedido) {
-            printf("Pedido selecionado.\n");
+            printf("ID do Pedido selecionado: %d\n", atual->id);
             
             printf("Digite o novo valor total do pedido: R$");
             scanf("%f", &atual->valorTotal);
@@ -117,7 +124,7 @@ void cancelarPedido() { // falta verificar se o pedido ja foi preparado ou nao
     Pedido* cancelado = inicioFila;
     while (cancelado != NULL) {
         if (cancelado->id == idPedido) {
-            printf("Pedido selecionado: %d\n", cancelado->id);
+            printf("ID do Pedido selecionado: %d\n", cancelado->id);
             inicioFila = inicioFila->proximo;
             free(cancelado);
             nPedidos--;
@@ -129,15 +136,72 @@ void cancelarPedido() { // falta verificar se o pedido ja foi preparado ou nao
 
 
 void prepararPedido() {
+    if(inicioFila == NULL) {
+        printf("Nenhum pedido foi registrado ainda.\n");
+        return;
+    }
     
+    
+    Pedido* preparado = inicioFila;
+    printf("ID do Pedido selecionado: %d\n", preparado->id);
+    
+    if (toupper(preparado->tipoEntrega) == 'L') {
+        if (filaLocal.frente == NULL) {
+            filaLocal.frente = preparado;
+        } else {
+            filaLocal.tras->proximo = preparado;
+        }
+        filaLocal.tras = preparado;
+        filaLocal.tamanho++;
+    } 
+    else if (toupper(preparado->tipoEntrega) == 'D') {
+        if (filaDelivery.frente == NULL) {
+            filaDelivery.frente = preparado;
+        } else {
+            filaDelivery.tras->proximo = preparado;
+        }
+        filaDelivery.tras = preparado;
+        filaDelivery.tamanho++;
+    }
+    
+    inicioFila = inicioFila->proximo;
+    preparado->proximo = NULL;
+    
+    free(preparado); // Libera a memória da pessoa chamada
+    nPedidos--;    // Decrementa o contador de pessoas
+    printf("O Pedido esta pronto.\n");
 }
 
-void visualizarProntos() {
+void visualizarProntos() { // tentei reaproveitar o codigo de visualizar cadastrados mas deu erro
+    if(filaLocal.frente == NULL || filaDelivery.frente == NULL) {
+        printf("Nenhum pedido foi preparado.\n");
+        return;
+    }
     
+    Pedido* preparado = filaLocal.frente;
+    printf("Pedidos na fila:\n");
+    while (preparado != NULL) {
+        printf("ID: %d\n", preparado->id);
+        printf("Valor Total: R$%.2f\n", preparado->valorTotal);
+        printf("Tipo de Entrega ('L' para Local/'D' para Delivery): %c\n", preparado->tipoEntrega);
+        preparado = preparado->proximo;
+    }
+    
+    Pedido* preparado = filaDelivery.frente;
+    printf("Pedidos na fila:\n");
+    while (preparado != NULL) {
+        printf("ID: %d\n", preparado->id);
+        printf("Valor Total: R$%.2f\n", preparado->valorTotal);
+        printf("Tipo de Entrega ('L' para Local/'D' para Delivery): %c\n", preparado->tipoEntrega);
+        preparado = preparado->proximo;
+    }
 }
 
 void entregarPedido() {
-    
+    if(inicioFila == NULL) {
+        printf("Nenhum pedido foi registrado ainda.\n");
+        return;
+    }
 }
 
 int main () {
